@@ -18,11 +18,11 @@ knitr::opts_chunk$set(
 <!-- badges: start -->
 <!-- badges: end -->
 
-The package provide a variety of methods to estimate site, path, and event terms from ground motion residuals.
+The ATE (additive term extraction) package provides a variety of methods to estimate site, path, and event terms from ground motion residuals.
 
 ## Installation
 
-1. Make sure "tiydverse", "cmdstanr", "stringr","dplyr", "lme4", and "magrittr" are installed as they are dependencies. Otherwise, you can run the following command to install them. For error and warnings when installing "cmdstanr", please refer to the [page]{https://mc-stan.org/cmdstanr/}.
+1. Make sure "tiydverse", "cmdstanr", "stringr","dplyr", "lme4", and "magrittr" are installed as they are dependencies. Otherwise, you can run the following command to install them. For error and warnings when installing "cmdstanr", please refer to the [page](https://mc-stan.org/cmdstanr/).
 
 ``` r
 install.packages(c("tiydverse", "cmdstanr", "stringr","dplyr", "lme4", "magrittr"))
