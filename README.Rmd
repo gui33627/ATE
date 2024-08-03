@@ -44,9 +44,42 @@ install_github('gui33627/ATE')
 
 This is the example code that reproduces the results of our simulation study:
 
-```{r example}
+```r
 library(ATE)
+library(tidyverse)
+library(lme4)
+N <- 10
+results_list <- list()
 
+for (i in 1:N) {
+  gm_data <- dgp(num_eq = 10, num_site = 20,
+            eta_eq_sd = 1, eta_site_sd = 1, eta_noise_sd = 1,
+            path_term = TRUE, eta_path_sd = 1,
+            num_eq_cluster = 4, num_site_cluster = 5,
+            missing_percent = 0.1)
+  
+  eta_site_fixed <- ATE::stepwise_extraction(gm_data, random = FALSE, path = FALSE)
+  eta_site_fixed_path <- ATE::stepwise_extraction(gm_data, random = FALSE, path = TRUE)
+  eta_site_random <- ATE::stepwise_extraction(gm_data, random = TRUE, path = FALSE)
+  eta_site_random_path <- ATE::stepwise_extraction(gm_data, random = TRUE, path = TRUE)
+  eta_site_fixed_random <- ATE::combined_extraction(gm_data, path = FALSE)
+  eta_site_fixed_random_path <- ATE::combined_extraction(gm_data, path = TRUE, path_method = "stepwise")
+  eta_site_fixed_random2 <- ATE::combined_extraction(gm_data, path = TRUE, path_method = "random")
+  eta_site_fixed2_random <- ATE::combined_extraction(gm_data, path = TRUE, path_method = "fixed")
+  eta_site_bayesian <- ATE::bayesian_extraction(gm_data, path = TRUE)
+  
+  results <- eta_site_fixed %>% left_join(eta_site_fixed_path, by = c("eta_site" = "eta_site", "site_id" = "site_id")) %>% 
+    left_join(eta_site_random, by = c("eta_site" = "eta_site", "site_id" = "site_id")) %>% 
+    left_join(eta_site_random_path, by = c("eta_site" = "eta_site", "site_id" = "site_id")) %>% 
+    left_join(eta_site_fixed_random, by = c("eta_site" = "eta_site", "site_id" = "site_id")) %>% 
+    left_join(eta_site_fixed_random_path, by = c("eta_site" = "eta_site", "site_id" = "site_id")) %>% 
+    left_join(eta_site_fixed_random2, by = c("eta_site" = "eta_site", "site_id" = "site_id")) %>% 
+    left_join(eta_site_fixed2_random, by = c("eta_site" = "eta_site", "site_id" = "site_id")) %>% 
+    left_join(eta_site_bayesian, by = c("eta_site" = "eta_site")) 
+  
+  
+  results_list <- c(results_list, list(results))
+}
 ```
 
 
