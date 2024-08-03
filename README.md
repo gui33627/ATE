@@ -43,7 +43,7 @@ study:
 library(ATE)
 library(tidyverse)
 library(lme4)
-N <- 10
+N <- 500
 results_list <- list()
 
 for (i in 1:N) {
