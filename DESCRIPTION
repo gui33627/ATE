@@ -1,0 +1,18 @@
+Package: ATE
+Title: ATE
+Version: 0.0.0.9000
+Authors@R: 
+    person("Junhui", "Yang", , "gui33627@gmail.com", role = c("aut", "cre"))
+Description: The package provide a variety of methods to estimate site, path, and event terms from ground motion residuals.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.3
+Imports: 
+    dplyr,
+    stringr,
+    tidyverse,
+    lme4,
+    cmdstanr,
+    magrittr
