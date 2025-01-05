@@ -2,16 +2,14 @@
 #'
 #' A sample ground motion dataset.
 #'
-#' @format A data frame with 180 rows and 8 variables:
+#' @format A data frame with 200 rows and 6 variables:
 #' \describe{
 #'   \item{r}{A numeric vector.}
-#'   \item{eta_eq}{A numeric vector.}
-#'   \item{eta_site}{A numeric vector.}
-#'   \item{eta_path}{A numeric vector.}
-#'   \item{noise}{A numeric vector.}
-#'   \item{earthquake_id}{An integer vector.}
+#'   \item{delta_B}{A numeric vector.}
+#'   \item{delta_S2S}{A numeric vector.}
+#'   \item{delta_WS}{A numeric vector.}
+#'   \item{event_id}{An integer vector.}
 #'   \item{site_id}{An integer vector.}
-#'   \item{path_id}{An integer vector.}
 #' }
 #' @examples
 #' data(gm_data)

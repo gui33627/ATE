@@ -1,88 +1,90 @@
 
-#' Estimate site terms by Bayesian model.
+#' Bayesian Estimate of Site Terms
 #'
-#' @param data A data frame used for estimating site effect.
-#' @param path A logical variable. If path == TRUE, path effect will be
-#' controlled in estimation of site effect.
+#' The function estimates site terms in ground motion models using a Bayesian framework.
 #'
-#' @return A data frame that includes site ID, and the corresponding
-#' true site terms and estimated site terms.
+#' @param data A data frame containing the input data for estimating site terms.
+#' The data frame must include `event_id`, `site_id`, `r` (ground motion residuals), and optionally `path_id` if path effects are considered.
+#' @param path A logical variable indicating whether to control for path effects.
+#' If `FALSE` (default), the estimation is performed without path effects. If `path = TRUE`, path effects are included in the model.
+#'
+#' @return A data frame containing the site IDs (`site_id`) and their corresponding estimated site terms (`delta_S2S`).
 #' @import tidyverse dplyr stringr cmdstanr
 #' @importFrom stats coefficients fitted lm rnorm sd setNames
 #' @export
 #'
 #' @examples
 #' data(gm_data)
-#' bayesian_extraction(data = gm_data, path = FALSE)
+#' bayesian_extraction(data = gm_data)
 bayesian_extraction <- function(data, path = FALSE){
 
   if(path == TRUE){
 
-    stan_file <- system.file("stan", "eta_terms_extraction.stan", package = "ATE")
+    stan_file <- system.file("stan", "terms_extraction.stan", package = "ATE")
     mod <- cmdstan_model(stan_file)
 
-    fit_eq_fixed_path <- lm(r ~ factor(earthquake_id) - 1, data = data)
-    data_fixed_path <- data %>% mutate(r_eq_rm = r - fitted(fit_eq_fixed_path))
-    fit_path_fixed <- lm(r_eq_rm ~ factor(path_id) - 1, data = data_fixed_path)
-    data_fixed_path <- data_fixed_path %>% mutate(r_eq_path_rm = r_eq_rm - fitted(fit_path_fixed))
-    fit_eq_site_fixed_path <- lm(r_eq_path_rm ~ factor(site_id) - 1, data = data_fixed_path)
+    fit_event_fixed_path <- lm(r ~ factor(event_id) - 1, data = data)
+    data_fixed_path <- data %>% mutate(r_event_rm = r - fitted(fit_event_fixed_path))
+    fit_path_fixed <- lm(r_event_rm ~ factor(path_id) - 1, data = data_fixed_path)
+    data_fixed_path <- data_fixed_path %>% mutate(r_event_path_rm = r_event_rm - fitted(fit_path_fixed))
+    fit_event_site_fixed_path <- lm(r_event_path_rm ~ factor(site_id) - 1, data = data_fixed_path)
 
     data_relevel <- data
-    data_relevel$earthquake_id <- remap_elements_and_levels(data$earthquake_id)
+    data_relevel$event_id <- remap_elements_and_levels(data$event_id)
     data_relevel$site_id <- remap_elements_and_levels(data$site_id)
     data_relevel$path_id <- remap_elements_and_levels(data$path_id)
 
-    eta_e_sd <- sd(fit_eq_fixed_path$fitted.values)
-    eta_p_sd <- sd(fit_path_fixed$fitted.values)
-    eta_s_sd <- sd(fit_eq_site_fixed_path$fitted.values)
+    tau <- sd(fit_event_fixed_path$fitted.values)
+    phi_P2P <- sd(fit_path_fixed$fitted.values)
+    phi_S2S <- sd(fit_event_site_fixed_path$fitted.values)
 
     unique_site_len <- length(unique(data_relevel$site_id))
-    unique_eq_len <- length(unique(data_relevel$earthquake_id))
+    unique_event_len <- length(unique(data_relevel$event_id))
     unique_path_len <- length(unique(data_relevel$path_id))
 
-    matrix_id <- cbind(as.numeric(data_relevel$earthquake_id),
+    matrix_id <- cbind(as.numeric(data_relevel$event_id),
                        as.numeric(data_relevel$site_id),
                        as.numeric(data_relevel$path_id))
 
-    data_list <- list(N = nrow(data_relevel), M = 3, N_e = unique_eq_len, N_s = unique_site_len,
+    data_list <- list(N = nrow(data_relevel), M = 3, N_e = unique_event_len, N_s = unique_site_len,
                       N_p = unique_path_len,
-                      eta_e_sd = eta_e_sd, eta_s_sd = eta_s_sd, eta_p_sd = eta_p_sd,
-                      tot_res = data_relevel$r,
+                      tau = tau, phi_S2S = phi_S2S, phi_P2P = phi_P2P,
+                      r = data_relevel$r,
                       mat_ids = matrix_id)
 
   }else{
-    stan_file <- system.file("stan", "eta_terms_extraction_nopath.stan", package = "ATE")
+    stan_file <- system.file("stan", "terms_extraction_nopath.stan", package = "ATE")
     mod <- cmdstan_model(stan_file)
 
-    fit_eq_fixed <- lm(r ~ factor(earthquake_id) - 1, data = data)
-    data_fixed <- data %>% mutate(r_eq_rm = r - fitted(fit_eq_fixed))
-    fit_eq_site_fixed <- lm(r_eq_rm ~ factor(site_id) - 1, data = data_fixed)
+    fit_event_fixed <- lm(r ~ factor(event_id) - 1, data = data)
+    data_fixed <- data %>% mutate(r_event_rm = r - fitted(fit_event_fixed))
+    fit_event_site_fixed <- lm(r_event_rm ~ factor(site_id) - 1, data = data_fixed)
 
     data_relevel <- data
-    data_relevel$earthquake_id <- remap_elements_and_levels(data$earthquake_id)
+    data_relevel$event_id <- remap_elements_and_levels(data$event_id)
     data_relevel$site_id <- remap_elements_and_levels(data$site_id)
 
-    eta_e_sd <- sd(fit_eq_fixed$fitted.values)
-    eta_s_sd <- sd(fit_eq_site_fixed$fitted.values)
+    tau <- sd(fit_event_fixed$fitted.values)
+    phi_S2S <- sd(fit_event_site_fixed$fitted.values)
 
     unique_site_len <- length(unique(data_relevel$site_id))
-    unique_eq_len <- length(unique(data_relevel$earthquake_id))
+    unique_event_len <- length(unique(data_relevel$event_id))
 
-    matrix_id <- cbind(as.numeric(data_relevel$earthquake_id),
+    matrix_id <- cbind(as.numeric(data_relevel$event_id),
                        as.numeric(data_relevel$site_id))
 
-    data_list <- list(N = nrow(data_relevel), M = 2, N_e = unique_eq_len, N_s = unique_site_len,
-                      eta_e_sd = eta_e_sd, eta_s_sd = eta_s_sd,
-                      tot_res = data_relevel$r,
+    data_list <- list(N = nrow(data_relevel), M = 2, N_e = unique_event_len, N_s = unique_site_len,
+                      tau = tau, phi_S2S = phi_S2S,
+                      r = data_relevel$r,
                       mat_ids = matrix_id)
   }
   fit <- mod$sample(data = data_list, seed = 123, chains = 4, parallel_chains = 4)
-  eta_site_fitted <- data_relevel %>% select(eta_site, site_id) %>%
+  delta_S2S <- data_relevel %>% select(site_id) %>%
     unique() %>% arrange(site_id) %>%
-    mutate(eta_site_fitted =
-             fit$summary()$mean[str_which(fit$summary()$variable, "eta_s")])
+    mutate(delta_S2S =
+             fit$summary()$mean[str_which(fit$summary()$variable, "delta_S2S")])
 
-  return(eta_site_fitted)
+  return(delta_S2S)
 }
 
 

@@ -2,20 +2,44 @@
 % Please edit documentation in R/relevel.R
 \name{remap_elements_and_levels}
 \alias{remap_elements_and_levels}
-\title{Remap Elements and Levels of a Factor Variable}
+\title{Reassign Levels and Elements of a Factor Variable with Numeric Values}
 \usage{
 remap_elements_and_levels(factor_var)
 }
 \arguments{
-\item{factor_var}{A factor variable whose elements and levels are to be remapped.}
+\item{factor_var}{A factor variable, or a numeric vector, or a character vector that can be coerced to numeric values.
+The input must contain numeric elements or be coercible to numeric values.}
 }
 \value{
-A factor variable with remapped elements and levels.
-The new levels will be a sequential range starting from 1.
+A factor variable with updated levels and elements.
+The levels are reassigned to a continuous numeric range starting from 1, corresponding to the unique observed values in the input.
 }
 \description{
-This function remaps the elements and levels of a factor variable.
-Given a factor variable, it reassigns the levels to a sequential range
-starting from 1 to the number of unique levels.
-The factor elements themselves are also reassigned accordingly.
+This function reassigns the levels and corresponding elements of a factor variable to a sequential numeric range.
+It is specifically designed to handle factor variables or vectors containing numeric values or values that can be
+coerced to numeric. The new levels are assigned as a continuous sequence from 1 to the number of unique observed
+values, and the factor elements are updated accordingly.
+}
+\details{
+Note that this function cannot handle character vectors that contain non-numeric values. The input must either be
+numeric, a factor with numeric levels, or a character vector that can be coerced to numeric values.
+
+This transformation is useful for normalizing factor levels in cases where some levels are completely unobserved in
+the data or where factor levels need to be remapped to a continuous numeric sequence.
+}
+\examples{
+# Example: Factor with missing levels
+set.seed(1)
+gm_data_missing <- dgp(num_event = 10, num_site = 20, tau = 1, phi_S2S = 1,
+                       phi_SS = 1, missing_percent = 0.9)
+
+# The 'site_id' variable has 20 levels but only 8 are observed
+print(gm_data_missing$site_id)
+# [1] 13 2 8 13 19 13 2 8 13 8 13 16 13 2 8 9 11 13 16 17
+# Levels: 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
+
+# Reassign the levels and elements of the 'site_id' variable
+remap_elements_and_levels(gm_data_missing$site_id)
+# [1] 5 1 2 5 8 5 1 2 5 2 5 6 5 1 2 3 4 5 6 7
+# Levels: 1 2 3 4 5 6 7 8
 }

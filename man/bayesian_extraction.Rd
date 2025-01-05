@@ -2,24 +2,24 @@
 % Please edit documentation in R/bayesian_extraction.R
 \name{bayesian_extraction}
 \alias{bayesian_extraction}
-\title{Estimate site terms by Bayesian model.}
+\title{Bayesian Estimate of Site Terms}
 \usage{
 bayesian_extraction(data, path = FALSE)
 }
 \arguments{
-\item{data}{A data frame used for estimating site effect.}
+\item{data}{A data frame containing the input data for estimating site terms.
+The data frame must include \code{event_id}, \code{site_id}, \code{r} (ground motion residuals), and optionally \code{path_id} if path effects are considered.}
 
-\item{path}{A logical variable. If path == TRUE, path effect will be
-controlled in estimation of site effect.}
+\item{path}{A logical variable indicating whether to control for path effects.
+If \code{FALSE} (default), the estimation is performed without path effects. If \code{path = TRUE}, path effects are included in the model.}
 }
 \value{
-A data frame that includes site ID, and the corresponding
-true site terms and estimated site terms.
+A data frame containing the site IDs (\code{site_id}) and their corresponding estimated site terms (\code{delta_S2S}).
 }
 \description{
-Estimate site terms by Bayesian model.
+The function estimates site terms in ground motion models using a Bayesian framework.
 }
 \examples{
 data(gm_data)
-bayesian_extraction(data = gm_data, path = FALSE)
+bayesian_extraction(data = gm_data)
 }

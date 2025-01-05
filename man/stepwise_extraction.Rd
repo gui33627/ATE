@@ -2,29 +2,33 @@
 % Please edit documentation in R/stepwise_extraction.R
 \name{stepwise_extraction}
 \alias{stepwise_extraction}
-\title{Estimate site terms by removing the earthquake effects, and path effects
-if path is provided, using either fixed effect or random effect models.}
+\title{Stepwise Extraction of Site Terms}
 \usage{
 stepwise_extraction(data, random = FALSE, path = FALSE)
 }
 \arguments{
-\item{data}{A data frame used for estimating site effect.}
+\item{data}{A data frame containing the input data for estimating site terms.
+The data frame must include columns \code{event_id}, \code{site_id}, \code{r} (ground motion residuals), and optionally \code{path_id} if path effects are included.}
 
-\item{random}{A logical variable. If random == TRUE, fixed effect models are used;
-if random == FALSE, random effect models are used.}
+\item{random}{A logical variable indicating whether to use random effect models.
+\itemize{
+\item \code{random = FALSE}(default) uses fixed effect models.
+\item \code{random = TRUE} uses random effect models (based on \code{lme4::lmer()}).
+}}
 
-\item{path}{A logical variable. If path == TRUE, path effect will be removed
-in estimation of site effect.}
+\item{path}{A logical variable indicating whether to account for path effects.
+\itemize{
+\item \code{path = FALSE}(default) estimates site terms without considering path effects.
+\item \code{path = TRUE} removes path terms before estimating site terms.
+}}
 }
 \value{
-A data frame that includes site ID, and the corresponding
-true site terms and estimated site terms.
+A data frame containing site IDs (\code{site_id}) and their corresponding estimated site terms (\code{delta_S2S}).
 }
 \description{
-Estimate site terms by removing the earthquake effects, and path effects
-if path is provided, using either fixed effect or random effect models.
+The function estimate site terms by removing the event terms (and path terms) from total ground motion residuals in a stepwise manner.
 }
 \examples{
 data(gm_data)
-eta_site_fitted <- stepwise_extraction(gm_data, random = FALSE, path = FALSE)
+delta_S2S <- stepwise_extraction(gm_data, random = FALSE)
 }

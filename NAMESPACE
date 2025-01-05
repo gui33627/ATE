@@ -2,8 +2,9 @@
 
 export("%>%")
 export(bayesian_extraction)
-export(combined_extraction)
 export(dgp)
+export(mixed_extraction)
+export(remap_elements_and_levels)
 export(stepwise_extraction)
 import(cmdstanr)
 import(dplyr)

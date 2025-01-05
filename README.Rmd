@@ -18,7 +18,7 @@ knitr::opts_chunk$set(
 <!-- badges: start -->
 <!-- badges: end -->
 
-The ATE (additive term extraction) package provides a variety of methods to estimate site, path, and event terms from ground motion residuals.
+The ATE (additive term extraction) package provides a variety of methods to estimate site, event, (and  path) terms from ground motion residuals.
 
 ## Installation
 
@@ -42,44 +42,157 @@ install_github('gui33627/ATE')
 
 ## Example
 
-This is the example code that reproduces the results of our simulation study:
+This is the example code that reproduces the results of the simulation study in our paper:
 
 ```r
 library(ATE)
-library(tidyverse)
-library(lme4)
-N <- 500
-results_list <- list()
+N <- 100
+num_event <- c(20, 50)
+num_site <- c(40, 200)
 
-for (i in 1:N) {
-  gm_data <- dgp(num_eq = 10, num_site = 20,
-            eta_eq_sd = 1, eta_site_sd = 1, eta_noise_sd = 1,
-            path_term = TRUE, eta_path_sd = 1,
-            num_eq_cluster = 4, num_site_cluster = 5,
-            missing_percent = 0.1)
-  
-  eta_site_fixed <- ATE::stepwise_extraction(gm_data, random = FALSE, path = FALSE)
-  eta_site_fixed_path <- ATE::stepwise_extraction(gm_data, random = FALSE, path = TRUE)
-  eta_site_random <- ATE::stepwise_extraction(gm_data, random = TRUE, path = FALSE)
-  eta_site_random_path <- ATE::stepwise_extraction(gm_data, random = TRUE, path = TRUE)
-  eta_site_fixed_random <- ATE::combined_extraction(gm_data, path = FALSE)
-  eta_site_fixed_random_path <- ATE::combined_extraction(gm_data, path = TRUE, path_method = "stepwise")
-  eta_site_fixed_random2 <- ATE::combined_extraction(gm_data, path = TRUE, path_method = "random")
-  eta_site_fixed2_random <- ATE::combined_extraction(gm_data, path = TRUE, path_method = "fixed")
-  eta_site_bayesian <- ATE::bayesian_extraction(gm_data, path = TRUE)
-  
-  results <- eta_site_fixed %>% left_join(eta_site_fixed_path, by = c("eta_site" = "eta_site", "site_id" = "site_id")) %>% 
-    left_join(eta_site_random, by = c("eta_site" = "eta_site", "site_id" = "site_id")) %>% 
-    left_join(eta_site_random_path, by = c("eta_site" = "eta_site", "site_id" = "site_id")) %>% 
-    left_join(eta_site_fixed_random, by = c("eta_site" = "eta_site", "site_id" = "site_id")) %>% 
-    left_join(eta_site_fixed_random_path, by = c("eta_site" = "eta_site", "site_id" = "site_id")) %>% 
-    left_join(eta_site_fixed_random2, by = c("eta_site" = "eta_site", "site_id" = "site_id")) %>% 
-    left_join(eta_site_fixed2_random, by = c("eta_site" = "eta_site", "site_id" = "site_id")) %>% 
-    left_join(eta_site_bayesian, by = c("eta_site" = "eta_site")) 
-  
-  
-  results_list <- c(results_list, list(results))
+# Simulation with balanced data
+for (i in 1:length(num_event)) {
+
+  results_list <- list()
+  mse_results <- data.frame(matrix(NA, nrow = N, ncol = 4))
+
+  for (j in 1:N) {
+    # generate data
+    gm_data <- dgp(num_event = num_event[i], num_site = num_site[i],
+                   tau = 1, phi_S2S = 1, phi_SS = 1)
+
+    delta_S2S_fixed <- ATE::stepwise_extraction(gm_data, random = FALSE)
+    delta_S2S_random <- ATE::stepwise_extraction(gm_data, random = TRUE)
+    delta_S2S_mixed <- ATE::mixed_extraction(gm_data)
+    delta_S2S_bayesian <- ATE::bayesian_extraction(gm_data)
+
+
+    results <- delta_S2S_fixed %>%
+      left_join(delta_S2S_random, by = c("site_id" = "site_id")) %>%
+      left_join(delta_S2S_mixed, by = c("site_id" = "site_id")) %>%
+      left_join(delta_S2S_bayesian, by = c("site_id" = "site_id")) %>%
+      rename(delta_S2S.fixed = delta_S2S.x, delta_S2S.random = delta_S2S.y,
+             delta_S2S.mixed = delta_S2S.x.x, delta_S2S.bayesian = delta_S2S.y.y)
+
+    mse <- gm_data %>% select(site_id, delta_S2S) %>% unique() %>% arrange(site_id) %>%
+      left_join(results, by = c("site_id" = "site_id")) %>%
+      mutate(y_fixed = delta_S2S.fixed - delta_S2S,
+             y_random = delta_S2S.random - delta_S2S,
+             y_mixed = delta_S2S.mixed - delta_S2S,
+             y_bayesian = delta_S2S.bayesian - delta_S2S) %>%
+      summarise(mse_fixed = sum((y_fixed)^2)/length(y_fixed),
+             mse_random = sum((y_random)^2)/length(y_random),
+             mse_mixed = sum((y_mixed)^2)/length(y_mixed),
+             mse_bayesian = sum((y_bayesian)^2)/length(y_bayesian))
+
+    results_list <- c(results_list, list(results))
+    mse_results[j,] <- mse
+    print(paste0(i," + ", j," done!"))
+  }
+  colnames(mse_results) <- colnames(mse)
+  write.csv(mse_results, file = paste0("mse_results", i, ".csv"), row.names = FALSE)
 }
+
+# Simulation with unbalanced data
+N <- 100
+num_event <- c(20)
+num_site <- c(40)
+missingness <- c(0.1, 0.2)
+
+
+for (k in 1:length(missingness)) {
+  for (i in 1:length(num_event)) {
+
+    results_list <- list()
+    mse_results <- data.frame(matrix(NA, nrow = N, ncol = 4))
+
+    for (j in 1:N) {
+      # generate data
+      gm_data <- dgp(num_event = num_event[i], num_site = num_site[i],
+                     tau = 1, phi_S2S = 1, phi_SS = 1,
+                     missing_percent = missingness[k])
+
+      delta_S2S_fixed <- ATE::stepwise_extraction(gm_data, random = FALSE)
+      delta_S2S_random <- ATE::stepwise_extraction(gm_data, random = TRUE)
+      delta_S2S_mixed <- ATE::mixed_extraction(gm_data)
+      delta_S2S_bayesian <- ATE::bayesian_extraction(gm_data)
+
+      results <- delta_S2S_fixed %>%
+        left_join(delta_S2S_random, by = c("site_id" = "site_id")) %>%
+        left_join(delta_S2S_mixed, by = c("site_id" = "site_id")) %>%
+        left_join(delta_S2S_bayesian, by = c("site_id" = "site_id")) %>%
+        rename(delta_S2S.fixed = delta_S2S.x, delta_S2S.random = delta_S2S.y,
+               delta_S2S.mixed = delta_S2S.x.x, delta_S2S.bayesian = delta_S2S.y.y)
+
+      mse <- gm_data %>% select(site_id, delta_S2S) %>% unique() %>% arrange(site_id) %>%
+        left_join(results, by = c("site_id" = "site_id")) %>%
+        mutate(y_fixed = delta_S2S.fixed - delta_S2S,
+               y_random = delta_S2S.random - delta_S2S,
+               y_mixed = delta_S2S.mixed - delta_S2S,
+               y_bayesian = delta_S2S.bayesian - delta_S2S) %>%
+        summarise(mse_fixed = sum((y_fixed)^2)/length(y_fixed),
+                  mse_random = sum((y_random)^2)/length(y_random),
+                  mse_mixed = sum((y_mixed)^2)/length(y_mixed),
+                  mse_bayesian = sum((y_bayesian)^2)/length(y_bayesian))
+
+      results_list <- c(results_list, list(results))
+      mse_results[j,] <- mse
+      print(paste0(k, "+", i," + ", j," done!"))
+    }
+    colnames(mse_results) <- colnames(mse)
+    write.csv(mse_results, file = paste0("mse_results",i, "_missing_", 
+                                         missingness[k], ".csv"), row.names = FALSE)
+  }
+}
+
 ```
+```{r, echo=FALSE}
+mse_small <- read.csv("/Users/junhui/Library/CloudStorage/GoogleDrive-junhuiyang@umass.edu/My Drive/Pengfei/mixed_effect_simulation/sim_results/mse_results1.csv")
+mse_large <- read.csv("/Users/junhui/Library/CloudStorage/GoogleDrive-junhuiyang@umass.edu/My Drive/Pengfei/mixed_effect_simulation/sim_results/mse_results2.csv")
+mse_small_missing_0.1 <- read.csv("/Users/junhui/Library/CloudStorage/GoogleDrive-junhuiyang@umass.edu/My Drive/Pengfei/mixed_effect_simulation/sim_results/mse_results1_missing_unbalanced0.1.csv")
+mse_small_missing_0.2 <- read.csv("/Users/junhui/Library/CloudStorage/GoogleDrive-junhuiyang@umass.edu/My Drive/Pengfei/mixed_effect_simulation/sim_results/mse_results1_missing_unbalanced0.2.csv")
+
+mse_small <- mse_small[, -1]
+mse_large <- mse_large[, -1]
+mse_small_missing_0.1 <- mse_small_missing_0.1[, -1]
+mse_small_missing_0.2 <- mse_small_missing_0.2[, -1]
+```
+
+```{r, eval=FALSE}
+mse_small <- read.csv("mse_results1.csv")
+mse_large <- read.csv("mse_results2.csv")
+mse_small_missing_0.1 <- read.csv("mse_results1_missing_0.1.csv")
+mse_small_missing_0.2 <- read.csv("mse_results1_missing_0.2.csv")
+```
+
+```{r}
+colMeans(mse_small)
+colMeans(mse_large)
+colMeans(mse_small_missing_0.1)
+colMeans(mse_small_missing_0.2)
+```
+The simulation results demonstrate that the Bayesian estimation of site terms consistently outperforms fixed, random, and mixed effect methods, achieving the lowest average MSE across all sites. This superior performance is observed in various scenarios, including small sample sizes, large sample sizes, and small samples with different percentages of missing data.
+
+```{r}
+plot_mse <- function(mse_mat, x_range = c(0, 0.2), y_range = c(0,30)){
+  
+  mse_x_range <- x_range
+  mse_y_range <- y_range
+  
+  color_list <- c('black', 'red', 'blue', 'purple')
+  plot(mse_x_range, mse_y_range, type = 'n', xlab = 'MSE', ylab = 'PDF')
+  
+  for (i in 1:ncol(mse_mat)) {
+    lines(density(mse_mat[,i]), lwd = 2, col = color_list[i])
+  }
+  
+  legend('topright', legend = colnames(mse_mat), col = color_list[1:ncol(mse_mat)], 
+         lwd = 2, lty = 1)
+}
+
+plot_mse(mse_small)
+```
+
+
 
 
