@@ -23,9 +23,9 @@ The data frame must include \code{site_id}, \code{event_id}, \code{r} (ground mo
 \item{path_method}{A character string specifying the method to control for path effects.
 Options are \code{"stepwise"}, \code{"random"}, or \code{"fixed"}. This parameter is only required if \code{path = TRUE}.
 \itemize{
-\item \strong{"stepwise"}: Removes path effects stepwise.
-\item \strong{"random"}: Treats path effects as random effects.
-\item \strong{"fixed"}: Treats path effects as fixed effects.
+\item "stepwise": Removes path effects stepwise.
+\item "random": Treats path effects as random effects.
+\item "fixed": Treats path effects as fixed effects.
 }}
 }
 \value{

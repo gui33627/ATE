@@ -11,9 +11,9 @@
 #' - `path = TRUE`: Path effects are included, and the modeling strategy is determined by the `path_method` parameter.
 #' @param path_method A character string specifying the method to control for path effects.
 #' Options are `"stepwise"`, `"random"`, or `"fixed"`. This parameter is only required if `path = TRUE`.
-#' - **"stepwise"**: Removes path effects stepwise.
-#' - **"random"**: Treats path effects as random effects.
-#' - **"fixed"**: Treats path effects as fixed effects.
+#' - "stepwise": Removes path effects stepwise.
+#' - "random": Treats path effects as random effects.
+#' - "fixed": Treats path effects as fixed effects.
 #'
 #' @return A data frame containing the site IDs (`site_id`) and their corresponding estimated site terms (`delta_S2S`).
 #'

@@ -12,13 +12,13 @@ The data frame must include columns \code{event_id}, \code{site_id}, \code{r} (g
 
 \item{random}{A logical variable indicating whether to use random effect models.
 \itemize{
-\item \code{random = FALSE}(default) uses fixed effect models.
+\item \code{random = FALSE} (default) uses fixed effect models.
 \item \code{random = TRUE} uses random effect models (based on \code{lme4::lmer()}).
 }}
 
 \item{path}{A logical variable indicating whether to account for path effects.
 \itemize{
-\item \code{path = FALSE}(default) estimates site terms without considering path effects.
+\item \code{path = FALSE} (default) estimates site terms without considering path effects.
 \item \code{path = TRUE} removes path terms before estimating site terms.
 }}
 }

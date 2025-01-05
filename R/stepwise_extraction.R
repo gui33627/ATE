@@ -6,10 +6,10 @@
 #' @param data A data frame containing the input data for estimating site terms.
 #' The data frame must include columns `event_id`, `site_id`, `r` (ground motion residuals), and optionally `path_id` if path effects are included.
 #' @param random A logical variable indicating whether to use random effect models.
-#' - `random = FALSE`(default) uses fixed effect models.
+#' - `random = FALSE` (default) uses fixed effect models.
 #' - `random = TRUE` uses random effect models (based on `lme4::lmer()`).
 #' @param path A logical variable indicating whether to account for path effects.
-#' - `path = FALSE`(default) estimates site terms without considering path effects.
+#' - `path = FALSE` (default) estimates site terms without considering path effects.
 #' - `path = TRUE` removes path terms before estimating site terms.
 #'
 #' @return  A data frame containing site IDs (`site_id`) and their corresponding estimated site terms (`delta_S2S`).
