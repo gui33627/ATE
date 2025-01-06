@@ -35,11 +35,12 @@ install_github('gui33627/ATE')
 ```
 
 4.  (Optional) Some users may encounter the following error message:
-    \`Error: CmdStan path has not been set yet. See ?set_cmdstan_path.’
-    This error occurs because your system does not recognize the
-    installed CmdStan package path. To fix this, you need to manually
-    set the path. You can resolve the issue by running the following
-    command:
+
+`Error: CmdStan path has not been set yet. See ?set_cmdstan_path.`
+
+This error occurs because your system does not recognize the installed
+CmdStan package path. To fix this, you need to manually set the path.
+You can resolve the issue by running the following command:
 
 ``` r
 library(cmdstanr)
