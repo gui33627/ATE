@@ -34,6 +34,18 @@ library(devtools)
 install_github('gui33627/ATE')
 ```
 
+4.  (Optional) Some users may encounter the following error message:
+    \`Error: CmdStan path has not been set yet. See ?set_cmdstan_path.’
+    This error occurs because your system does not recognize the
+    installed CmdStan package path. To fix this, you need to manually
+    set the path. You can resolve the issue by running the following
+    command:
+
+``` r
+library(cmdstanr)
+set_cmdstan_path(path = "C:/Users/.../stan/Library/bin/cmdstan") # please adjust the path accordingly
+```
+
 ## Example
 
 This is the example code that reproduces the results of the simulation
@@ -44,6 +56,7 @@ library(ATE)
 N <- 100
 num_event <- c(20, 50)
 num_site <- c(40, 200)
+prefix <- "path_to_directory" # please specify the directory for saving the outputs
 
 # Simulation with balanced data
 for (i in 1:length(num_event)) {
@@ -85,7 +98,7 @@ for (i in 1:length(num_event)) {
     print(paste0(i," + ", j," done!"))
   }
   colnames(mse_results) <- colnames(mse)
-  write.csv(mse_results, file = paste0("mse_results", i, ".csv"), row.names = FALSE)
+  write.csv(mse_results, file = paste0(prefix, "/mse_results", i, ".csv"), row.names = FALSE)
 }
 
 # Simulation with unbalanced data
@@ -135,17 +148,17 @@ for (k in 1:length(missingness)) {
       print(paste0(k, "+", i," + ", j," done!"))
     }
     colnames(mse_results) <- colnames(mse)
-    write.csv(mse_results, file = paste0("mse_results",i, "_missing_", 
+    write.csv(mse_results, file = paste0(prefix, "/mse_results",i, "_missing_", 
                                          missingness[k], ".csv"), row.names = FALSE)
   }
 }
 ```
 
 ``` r
-mse_small <- read.csv("mse_results1.csv")
-mse_large <- read.csv("mse_results2.csv")
-mse_small_missing_0.1 <- read.csv("mse_results1_missing_0.1.csv")
-mse_small_missing_0.2 <- read.csv("mse_results1_missing_0.2.csv")
+mse_small <- read.csv(paste0(prefix, "/mse_results1.csv"))
+mse_large <- read.csv(paste0(prefix, "/mse_results2.csv"))
+mse_small_missing_0.1 <- read.csv(paste0(prefix, "/mse_results1_missing_0.1.csv"))
+mse_small_missing_0.2 <- read.csv(paste0(prefix, "/mse_results1_missing_0.2.csv"))
 ```
 
 ``` r
